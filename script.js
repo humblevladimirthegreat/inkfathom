@@ -401,7 +401,11 @@ function print() {
     sheet.height,
     gutter
   );
-  doc.save(buildPdfName(deckSize, card.name));
+  // Get filename from input, fallback to 'deck' if empty
+  const filenameInput = document.getElementById("pdfFilename");
+  let filename = filenameInput && filenameInput.value.trim() ? filenameInput.value.trim() : "deck";
+  if (!filename.toLowerCase().endsWith('.pdf')) filename += '.pdf';
+  doc.save(filename);
 }
 
 function getBase64Image(img, width, height) {

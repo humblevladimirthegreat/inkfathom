@@ -98,9 +98,6 @@ function getCardSize(sizeClass) {
   };
 }
 
-const buildPdfName = (deckSize, cardName) =>
-  `InkfathomProxy-${deckSize}_${cardName.replace(" ", "_")}.pdf`;
-
 function getFilenameFromUrl(url) {
   const pathname = new URL(url).pathname;
   const index = pathname.lastIndexOf("/");
