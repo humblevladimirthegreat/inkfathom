@@ -317,7 +317,7 @@ const buildPdf = (
 
   // Draw crop lines at card borders
   doc.setDrawColor(0, 0, 0); // solid black
-  doc.setLineWidth(0.5);
+  doc.setLineWidth(2);
   // Vertical crop lines
   for (let col = 0; col <= columns; col++) {
     const x = marginLeft + col * (cardWidth + gutter) - (col === columns ? gutter : 0);
