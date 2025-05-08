@@ -286,12 +286,30 @@ const buildPdf = (
   const marginLeft =
     (pageWidth - cardWidth * columns - gutter * (columns - 1)) / 2;
   const marginTop = (pageHeight - cardHeight * rows - gutter * (rows - 1)) / 2;
+  console.log(
+    "pageWidth, pageHeight, cardWidth, cardHeight, columns, rows, gutter",
+    pageWidth, pageHeight, cardWidth, cardHeight, columns, rows, gutter)
   cardPositions.forEach((position, i) => {
-    const x = marginLeft + position.x;
-    const y = marginTop + position.y;
+  const x = marginLeft + position.x;
+  const y = marginTop + position.y;
 
-    doc.addImage(base64Images[i], "JPEG", x, y, cardWidth, cardHeight);
-
+    try {
+      doc.addImage(base64Images[i], "JPEG", x, y, cardWidth, cardHeight);
+    } catch (error) {
+      console.error("Failed to add image to PDF.", {
+        error,
+        index: i,
+        x,
+        y,
+        cardWidth,
+        cardHeight,
+        position,
+        pageWidth,
+        pageHeight,
+        gutter
+      });
+      throw error; // rethrow to preserve original error behavior
+    }
     if (position.isLast && i < cardPositions.length - 1) {
       doc.addPage();
     }
@@ -318,7 +336,13 @@ const buildPdf = (
   return doc;
 };
 
-function getCardSize(scale) {
+function getCardSize(sizeClass) {
+  const sizeMap = {
+    normalSize: 100,
+    smallSize: 80,
+    largeSize: 120,
+  };
+  const scale = sizeMap[sizeClass]
   return {
     width: 63 * scale / 100,
     height: 88 * scale / 100,
