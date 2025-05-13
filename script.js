@@ -271,6 +271,21 @@ function fill(value, cardType, configuration) {
 
 const { jsPDF } = window.jspdf;
 
+const drawCropLines = (doc, marginLeft, marginTop, cardWidth, cardHeight, columns, rows, pageWidth, pageHeight, gutter) => {
+  doc.setDrawColor(0, 0, 0); // solid black
+  doc.setLineWidth(2);
+  // Vertical crop lines
+  for (let col = 0; col <= columns; col++) {
+    const x = marginLeft + col * (cardWidth + gutter) - (col === columns ? gutter : 0);
+    doc.line(x, 0, x, pageHeight); // from top to bottom
+  }
+  // Horizontal crop lines
+  for (let row = 0; row <= rows; row++) {
+    const y = marginTop + row * (cardHeight + gutter) - (row === rows ? gutter : 0);
+    doc.line(0, y, pageWidth, y); // from left to right
+  }
+};
+
 const buildPdf = (
   base64Images,
   cardPositions,
@@ -310,6 +325,9 @@ const buildPdf = (
       });
       throw error; // rethrow to preserve original error behavior
     }
+    // Draw crop lines on every page
+    drawCropLines(doc, marginLeft, marginTop, cardWidth, cardHeight, columns, rows, pageWidth, pageHeight, gutter);
+
     if (position.isLast && i < cardPositions.length - 1) {
       doc.addPage();
     }
