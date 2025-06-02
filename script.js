@@ -708,3 +708,42 @@ if (locationHref.search) {
   document.getElementById("extra_emblems").value = searchParams.get("emblems");
 }
 renderDeck();
+
+document.querySelector(".commander").onclick = async function () {
+  const cardsTextarea = document.querySelector("#cards");
+  const filenameInput = document.getElementById("pdfFilename");
+  const showCommanderError = (msg) => {
+    let errorDiv = document.querySelector(".error");
+    if (errorDiv.classList.contains("hidden")) errorDiv.classList.remove("hidden");
+    const ul = errorDiv.lastElementChild.lastElementChild;
+    const li = document.createElement("li");
+    li.textContent = msg;
+    ul.appendChild(li);
+  };
+  try {
+    let lines = cardsTextarea.value.split("\n");
+    const commanderIndex = lines.findIndex(line => line.includes("[Commander{top}]"));
+    if (commanderIndex === -1) {
+      showCommanderError("No [Commander{top}] line found.");
+      return;
+    }
+    const commanderLine = lines[commanderIndex];
+    let commanderName = commanderLine.replace(/\[Commander\{top\}\]/, "");
+    const match = commanderName.match(/1x\s*([^\(\[]+)/);
+    if (!match) {
+      showCommanderError("Could not extract commander name from line: " + commanderLine);
+      return;
+    }
+    commanderName = match[1].trim();
+    lines.splice(commanderIndex, 1);
+    cardsTextarea.value = lines.join("\n");
+    filenameInput.value = commanderName;
+    await new Promise(resolve => {
+      renderDeck();
+      setTimeout(resolve, 500);
+    });
+    print();
+  } catch (err) {
+    showCommanderError("Commander action failed: " + (err && err.message ? err.message : err));
+  }
+};
