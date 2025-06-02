@@ -238,35 +238,57 @@ function getTypeImageUrls(cardType, data, name, edition) {
 
 const keywords = ["Deck", "Sideboard", "Maybeboard"];
 function fill(value, cardType, configuration) {
-  [...value.split("\n")]
-    .filter((line) => !!line.trim() && !keywords.includes(line.trim()))
-    .forEach((context) => {
-      const card = parseContext(context);
-      if (isUrl(card.name)) {
+  const lines = [...value.split("\n")]
+    .filter((line) => !!line.trim() && !keywords.includes(line.trim()));
+
+  // Map each line to a promise that resolves to the card data (or error info)
+  const promises = lines.map((context) => {
+    const card = parseContext(context);
+    if (isUrl(card.name)) {
+      // Custom card, no fetch needed
+      return Promise.resolve({
+        type: "custom",
+        card,
+      });
+    }
+    const url = getTypeUrl(cardType, card.name, card.set);
+    return fetch(url)
+      .then((response) => response.json())
+      .then((data) => ({
+        type: "fetched",
+        card,
+        data,
+      }))
+      .catch((e) => ({
+        type: "error",
+        card,
+        error: e,
+      }));
+  });
+
+  // Wait for all fetches to complete, then append in order
+  Promise.all(promises).then((results) => {
+    results.forEach((result) => {
+      if (result.type === "custom") {
         appendCards(
-          [{ source: card.name, custom: true, isBasicLand: false }],
-          card.quantity,
+          [{ source: result.card.name, custom: true, isBasicLand: false }],
+          result.card.quantity,
           true,
           configuration
         );
-        return;
+      } else if (result.type === "fetched") {
+        appendCards(
+          getTypeImageUrls(cardType, result.data, result.card.name, result.card.edition),
+          result.card.quantity,
+          false,
+          configuration
+        );
+      } else if (result.type === "error") {
+        appendToErrorList(result.card.name);
+        console.error(`Booo:\n ${result.error}`);
       }
-      const url = getTypeUrl(cardType, card.name, card.set);
-      fetch(url)
-        .then((response) => response.json())
-        .then((data) =>
-          appendCards(
-            getTypeImageUrls(cardType, data, card.name, card.edition),
-            card.quantity,
-            false,
-            configuration
-          )
-        )
-        .catch((e) => {
-          appendToErrorList(card.name);
-          console.error(`Booo:\n ${e}`);
-        });
     });
+  });
 }
 
 const { jsPDF } = window.jspdf;
