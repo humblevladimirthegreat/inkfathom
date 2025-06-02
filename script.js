@@ -721,7 +721,8 @@ document.querySelector(".commander").onclick = async function () {
     ul.appendChild(li);
   };
   try {
-    let lines = cardsTextarea.value.split("\n");
+    // Remove empty lines at the beginning and end
+    let lines = cardsTextarea.value.split("\n").filter(line => line.trim().length > 0);
     const commanderIndex = lines.findIndex(line => line.includes("[Commander{top}]"));
     if (commanderIndex === -1) {
       showCommanderError("No [Commander{top}] line found.");
